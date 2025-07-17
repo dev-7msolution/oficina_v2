@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "app/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MarcaVeiculo {
+  id        Int             @id @default(autoincrement())
+  nome      String          @unique
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  modelos   ModeloVeiculo[]
+}
+
+model ModeloVeiculo {
+  id        Int          @id @default(autoincrement())
+  nome      String
+  marcaId   Int
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  anoFim    Int?
+  anoInicio Int?
+  marca     MarcaVeiculo @relation(fields: [marcaId], references: [id])
+  veiculos  Veiculo[]
+
+  @@unique([nome, marcaId, anoInicio, anoFim])
+}
+
+model TipoServico {
+  id          Int           @id @default(autoincrement())
+  nome        String        @unique
+  descricao   String?
+  valor       Float
+  tempoMedio  Int?
+  ativo       Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  ItemServico ItemServico[]
+}
+
+model Cliente {
+  id        Int       @id @default(autoincrement())
+  cpf       String    @unique
+  nome      String
+  endereco  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  veiculos  Veiculo[]
+}
+
+model Veiculo {
+  id            Int            @id @default(autoincrement())
+  placa         String         @unique
+  clienteId     Int
+  modeloId      Int
+  ano           Int
+  cor           String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ordensServico OrdemServico[]
+  cliente       Cliente        @relation(fields: [clienteId], references: [id])
+  modelo        ModeloVeiculo  @relation(fields: [modeloId], references: [id])
+}
+
+model OrdemServico {
+  id            Int           @id @default(autoincrement())
+  veiculoId     Int
+  status        String        @default("ABERTO")
+  tipoPagamento String?
+  observacoes   String?
+  valorTotal    Float
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  itensPeca     ItemPeca[]
+  itensServico  ItemServico[]
+  veiculo       Veiculo       @relation(fields: [veiculoId], references: [id])
+}
+
+model ItemServico {
+  id             Int          @id @default(autoincrement())
+  ordemServicoId Int
+  tipoServicoId  Int
+  quantidade     Int          @default(1)
+  valorUnitario  Float
+  valorTotal     Float
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  tipoServico    TipoServico  @relation(fields: [tipoServicoId], references: [id])
+}
+
+model ItemPeca {
+  id             Int          @id @default(autoincrement())
+  ordemServicoId Int
+  nome           String
+  quantidade     Int          @default(1)
+  valorUnitario  Float
+  valorTotal     Float
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id])
+}
